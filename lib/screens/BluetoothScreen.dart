@@ -135,7 +135,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                     );
                   },
                 ),
-              ),
+
             ],
           ),
         ),

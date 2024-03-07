@@ -142,8 +142,7 @@ class _MainScreenState extends State<MainScreen> {
                     ],
                   ),
 
-                  Expanded(
-                    child: ListView.builder(
+                  ListView.builder(
                       itemCount: devicesList.length,
                       itemBuilder: (context, index) {
                         return ListTile(
@@ -153,7 +152,6 @@ class _MainScreenState extends State<MainScreen> {
                         );
                       },
                     ),
-                  ),
                 ],
               ),
 
