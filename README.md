@@ -1,3 +1,6 @@
+![Image Alt Text](assets/centipede.png)
+
+
 # control_the_centipede
 
 A Flutter Project
