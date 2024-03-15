@@ -1,0 +1,15 @@
+import 'package:flutter/material.dart';
+import 'package:centipede_control/screens/MainScreen.dart';
+import 'package:centipede_control/screens/BluetoothScreen.dart';
+
+class Routes {
+  static const String MAINSCREEN = '/main';
+  static const String BLUETOOTHSCREEN = '/bt';
+
+  static Map<String, Widget Function(BuildContext)> get getroutes =>
+      {
+        '/': (context) => MainScreen(server: null,),
+        MAINSCREEN: (context) => MainScreen(server: null,),
+        BLUETOOTHSCREEN: (context) => BluetoothScreen(),
+      };
+}
