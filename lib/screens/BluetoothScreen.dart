@@ -14,6 +14,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   List<BluetoothDevice> devicesList = [];
   String connectedDeviceName = '';
   StreamSubscription<List<ScanResult>>? _scanSubscription;
+  bool isConnected = false;
 
   @override
   void dispose() {
@@ -74,6 +75,38 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     }
   }
 
+  Future<void> disconnectToDevice(BluetoothDevice device) async{
+    try {
+      await device.disconnect();
+
+      // You can add further actions after successful connection if needed
+    } catch (e) {
+      print('Failed to disconnect to the device: $e');
+
+    }
+  }
+
+  Future<void> checkConnection(BluetoothDevice currentDevice) async{
+    List<BluetoothDevice> connectedDevices = await flutterBlue.connectedDevices;
+    //FlutterBlue flutterBlue= FlutterBlue.instance;
+    BluetoothDevice connectedDevice;
+    if(connectedDevices.isNotEmpty){
+      for(var device in connectedDevices){
+        if(device.id == currentDevice.id){
+          setState(() {
+            isConnected = true;
+          });
+        }
+      }
+      if(isConnected){
+        disconnectToDevice(currentDevice);
+      }
+      else{
+        connectToDevice(currentDevice);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -125,6 +158,10 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                       value: 'about',
                       child: Text('About'),
                     ),
+                    const PopupMenuItem<String>(
+                      value: 'data',
+                      child: Text('Data'),
+                    ),
                   ];
                 },
               )
@@ -139,7 +176,10 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                     return ListTile(
                       title: Text(devicesList[index].name ?? 'Unknown'),
                       subtitle: Text(devicesList[index].id.toString()),
-                      onTap: () => connectToDevice(devicesList[index]),
+                      onTap: () async {
+                        await checkConnection(devicesList[index]);
+                      }
+                          //connectToDevice(devicesList[index]),
                     );
                   },
                 ),

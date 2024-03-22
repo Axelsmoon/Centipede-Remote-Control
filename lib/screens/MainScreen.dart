@@ -138,6 +138,10 @@ class _MainScreenState extends State<MainScreen> {
                         value: 'about',
                         child: Text('About'),
                       ),
+                      const PopupMenuItem<String>(
+                        value: 'data',
+                        child: Text('Data'),
+                      ),
                     ];
                   },
                 )
@@ -253,6 +257,7 @@ class DPad extends StatelessWidget {
                   onTap: () {
                     // Define the action for the bottom PentagonButton here
                     sendCommand("WAVE 64 30\r\n");
+                    print("right");
                   },
                 ),
 
@@ -278,30 +283,54 @@ class DPad extends StatelessWidget {
       ],
     );
   }
+
 }
 
-class PentagonButton extends StatelessWidget {
+class PentagonButton extends StatefulWidget {
   final double width;
   final double height;
   final double rotationAngle; // Angle of rotation in radians
   final VoidCallback onTap; // Callback function for onTap event
 
-  PentagonButton({required this.width,
+  PentagonButton({
+    required this.width,
     required this.height,
     this.rotationAngle = 0.0,
     required this.onTap,
   });
 
   @override
+  _PentagonButtonState createState() => _PentagonButtonState();
+}
+
+class _PentagonButtonState extends State<PentagonButton> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: CustomPaint(
-        size: Size(width, height),
-        painter: PentagonPainter(rotationAngle: rotationAngle),
-        child: InkWell(
-          onTap: onTap, // Call the provided callback function onTap
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() {
+          _isPressed = true;
+        });
+        _sendCommandRepeatedly();
+      },
+      onTapUp: (_) {
+        setState(() {
+          _isPressed = false;
+        });
+      },
+      onTapCancel: () {
+        setState(() {
+          _isPressed = false;
+        });
+      },
+      child: SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: CustomPaint(
+          size: Size(widget.width, widget.height),
+          painter: PentagonPainter(rotationAngle: widget.rotationAngle),
           child: Center(
             child: Text(
               '+',
@@ -312,7 +341,17 @@ class PentagonButton extends StatelessWidget {
       ),
     );
   }
+
+  void _sendCommandRepeatedly() {
+    if (_isPressed) {
+      // Command to send when the button is pressed
+      widget.onTap();
+      // Add delay and recursively call this function while the button is pressed
+      Future.delayed(Duration(milliseconds: 100), _sendCommandRepeatedly);
+    }
+  }
 }
+
 
 
 
