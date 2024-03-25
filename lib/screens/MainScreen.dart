@@ -100,7 +100,7 @@ class _MainScreenState extends State<MainScreen> {
         Scaffold(
           backgroundColor: Color.fromRGBO(0, 70, 80, 0.57),
           appBar: AppBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor: Color.fromRGBO(250, 90, 50, 0.5),
               elevation: 0,
               title: Text(
                   'Centipede Remote Control',
@@ -123,7 +123,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               actions:[
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.menu),
+                  icon: const Icon(Icons.menu, color: Color.fromRGBO(255, 255, 255, 0.70),),
                   onSelected: (value) {
                     Navigator.pushNamed(context, '/' "$value");
 
@@ -420,8 +420,8 @@ class Lever extends StatefulWidget {
 
 class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  double _leverPosition = 0.5;
-  double sensitivity = 200.0; // Adjust the sensitivity value
+  double _leverPosition = 63.5; // Initial position corresponding to WAVE 64
+  double sensitivity = 2.0; // Adjust the sensitivity value
 
   @override
   void initState() {
@@ -447,36 +447,16 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
           _leverPosition -= details.delta.dy / sensitivity;
           if (_leverPosition < 0.0) {
             _leverPosition = 0.0;
-          } else if (_leverPosition > 0.0 && _leverPosition <= 0.2) {
-            _leverPosition = 0.2;
-          } else if (_leverPosition > 0.2 && _leverPosition <= 0.4) {
-            _leverPosition = 0.4;
-          } else if (_leverPosition > 0.4 && _leverPosition <= 0.6) {
-            _leverPosition = 0.6;
-          } else if (_leverPosition > 0.6 && _leverPosition <= 0.8) {
-            _leverPosition = 0.8;
-          } else if (_leverPosition > 0.8 ) {
-            _leverPosition = 1.0;
+          } else if (_leverPosition > 127.0) {
+            _leverPosition = 127.0;
           }
           // Determine the command based on lever position and send it via Bluetooth
-          if (_leverPosition <= 0.0) {
-            widget.sendCommand('WAVE 0\r\n'); // Example command for moving forward
-          } else if (_leverPosition <= 0.2){
-            widget.sendCommand('WAVE 25\r\n');
-          } else if (_leverPosition <= 0.4){
-            widget.sendCommand('WAVE 50\r\n');
-          } else if (_leverPosition <= 0.6){
-            widget.sendCommand('WAVE 75\r\n');
-          } else if (_leverPosition <= 0.8){
-            widget.sendCommand('WAVE 100\r\n');
-          } else {
-            widget.sendCommand('WAVE 127\r\n');
-          }
+          widget.sendCommand('WAVE ${_leverPosition.round()}\r\n');
         });
       },
       onVerticalDragEnd: (details) {
         _controller.animateTo(
-          _leverPosition,
+          _leverPosition / 127.0,
           duration: Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -496,15 +476,15 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
                 return Positioned(
                   top: (200 - 50) * (1 - _controller.value), // Subtract lever height
                   child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Color.fromRGBO(250, 90, 50, 0.77),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(' ( ͡° ͜ʖ ͡°)'),
-                    )
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Color.fromRGBO(250, 90, 50, 0.77),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(' ( ͡° ͜ʖ ͡°)'),
+                      )
                   ),
                 );
               },
@@ -514,5 +494,4 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
       ),
     );
   }
-
 }

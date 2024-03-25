@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BluetoothScreen extends StatefulWidget {
@@ -12,9 +13,11 @@ class BluetoothScreen extends StatefulWidget {
 class _BluetoothScreenState extends State<BluetoothScreen> {
   FlutterBlue flutterBlue = FlutterBlue.instance;
   List<BluetoothDevice> devicesList = [];
+  List<BluetoothDevice> devicesConnectedTo = [];
   String connectedDeviceName = '';
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   bool isConnected = false;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void dispose() {
@@ -25,11 +28,20 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
 
   @override
   void initState() {
+    //_showErrorSnackBar('Testing error bar ');
     super.initState();
     _requestLocationPermission();
     _fetchConnectedDevices();
     scanDevices();
   }
+
+  // Method to display error message in a SnackBar
+  void _showErrorSnackBar(String errorMessage) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(errorMessage),
+    ));
+  }
+
 
   Future<void> _requestLocationPermission() async {
     try{
@@ -47,22 +59,34 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     List<BluetoothDevice> connectedDevices = await flutterBlue.connectedDevices;
     setState(() {
       devicesList.addAll(connectedDevices);
+      devicesConnectedTo.addAll(connectedDevices);
     });
   }
 
   Future<void> scanDevices() async {
-    await Permission.location.request();
-    _scanSubscription = flutterBlue.scanResults.listen((List<ScanResult> results) {
-      for (ScanResult result in results) {
-        if (!devicesList.contains(result.device)) {
-          setState(() {
-            devicesList.add(result.device);
-          });
+    try {
+      await Permission.location.request();
+      _scanSubscription = flutterBlue.scanResults.listen((List<ScanResult> results) {
+        for (ScanResult result in results) {
+          if (!devicesList.contains(result.device)) {
+            setState(() {
+              if(result.device.name != '')
+                devicesList.add(result.device);
+            });
+          }
         }
+      });
+      try {
+        flutterBlue.startScan();
+        //_showErrorSnackBar('num devices: ${devicesList.length} ');
+      } catch(e){
+        _showErrorSnackBar('error: $e ');
       }
-    });
-    flutterBlue.startScan();
+    } catch (error) {
+      _showErrorSnackBar('Failed to start scanning for devices: $error');
+    }
   }
+
 
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
@@ -90,6 +114,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     List<BluetoothDevice> connectedDevices = await flutterBlue.connectedDevices;
     //FlutterBlue flutterBlue= FlutterBlue.instance;
     BluetoothDevice connectedDevice;
+    print("check connection");
     if(connectedDevices.isNotEmpty){
       for(var device in connectedDevices){
         if(device.id == currentDevice.id){
@@ -100,10 +125,16 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       }
       if(isConnected){
         disconnectToDevice(currentDevice);
+        setState(() {
+          isConnected = false;
+        });
       }
       else{
         connectToDevice(currentDevice);
       }
+    }
+    else{
+      connectToDevice(currentDevice);
     }
   }
 
@@ -123,11 +154,19 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
           ),*/
         ),
         Scaffold(
+          key: _scaffoldKey,
           backgroundColor: Colors.white,
           appBar: AppBar(
             backgroundColor: Color.fromRGBO(0, 70, 80, 0.57),
             elevation: 0,
-            title: Text('Bluetooth Devices'),
+            title: Text(
+              'Bluetooth Devices',
+              style: GoogleFonts.getFont(
+                'Overlock',
+                fontSize: 25,
+                color: Colors.white,
+              ),
+            ),
             centerTitle: true,
             shape: Border(
               bottom: BorderSide(
@@ -173,13 +212,85 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                 child: ListView.builder(
                   itemCount: devicesList.length,
                   itemBuilder: (context, index) {
-                    return ListTile(
+                    bool isDeviceConnected = devicesConnectedTo.contains(devicesList[index]);
+                    return Container(
+                        decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(10.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            spreadRadius: 2,
+                            blurRadius: 2,
+                            offset: Offset(0, 5), // changes position of shadow
+                          ),
+                          ]
+                        ),
+                    margin: EdgeInsets.all(8.0),
+                      child: ListTile(
                       title: Text(devicesList[index].name ?? 'Unknown'),
                       subtitle: Text(devicesList[index].id.toString()),
                       onTap: () async {
+
                         await checkConnection(devicesList[index]);
-                      }
+                        /*await Future.delayed(Duration(milliseconds: 1500));
+                        Navigator.of(context).pop();
+                        Navigator.pushNamed(context, '/bt');*/
+                        if(isDeviceConnected){
+                          _showErrorSnackBar('Please wait. Disconnecting... ');
+                          StreamSubscription<
+                              BluetoothDeviceState>? connectionSubscription;
+                          connectionSubscription =
+                              devicesList[index].state.listen((
+                                  deviceState) async {
+                                if (deviceState !=
+                                    BluetoothDeviceState.connected) {
+                                  // Cancel the subscription before navigating
+                                  connectionSubscription?.cancel();
+                                  await Future.delayed(Duration(milliseconds: 1500));
+                                  Navigator.of(context).pop();
+                                  Navigator.pushNamed(context, '/bt');
+                                }
+                              });
+
+                          // Cancel the subscription if the device is already connected
+                          if (!isDeviceConnected) {
+                            connectionSubscription.cancel();
+                          }
+                        }
+
+                        else if(!isDeviceConnected) {
+                          _showErrorSnackBar('Please wait. Connecting... ');
+                          // Subscribe to device connection state changes
+                          StreamSubscription<
+                              BluetoothDeviceState>? connectionSubscription;
+                          connectionSubscription =
+                              devicesList[index].state.listen((
+                                  deviceState) async {
+                                if (deviceState ==
+                                    BluetoothDeviceState.connected) {
+                                  // Cancel the subscription before navigating
+                                  connectionSubscription?.cancel();
+                                  Navigator.of(context).pop();
+                                  Navigator.pushNamed(context, '/bt');
+                                }
+                              });
+
+                          // Cancel the subscription if the device is already connected
+                          if (isDeviceConnected) {
+                            connectionSubscription.cancel();
+                          }
+                        }
+
+
+                      },
+
+                      trailing: isDeviceConnected
+                      ? Icon(Icons.bluetooth_connected, color: Colors.blue)
+                          : Icon(Icons.bluetooth),
+
                           //connectToDevice(devicesList[index]),
+                      ),
                     );
                   },
                 ),

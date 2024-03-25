@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class DataScreen extends StatefulWidget {
   @override
@@ -121,7 +122,15 @@ class _DataScreenState extends State<DataScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Data Screen'),
+        backgroundColor: Color.fromRGBO(80, 50, 80, 0.57),
+        title: Text(
+          'Data',
+          style: GoogleFonts.getFont(
+            'Overlock',
+            fontSize: 25,
+            color: Colors.white,
+          ),
+        ),
         centerTitle: true,
         shape: Border(
           bottom: BorderSide(
@@ -191,8 +200,7 @@ class _DataScreenState extends State<DataScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Status Code: $statusCode3'),
-                Text('Sensor Type: $sensorType3'),
-                Text('Sensor Data: $sensorData3'),
+
               ],
             ),
           ),
