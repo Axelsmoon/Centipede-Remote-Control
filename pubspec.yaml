@@ -67,6 +67,7 @@ flutter:
     - assets/Sandy_Background.png
     - assets/centipede.png
     - assets/Designer.png
+    - assets/Untitled-centipede.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

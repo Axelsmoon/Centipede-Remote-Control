@@ -21,17 +21,17 @@ class _AboutScreenState extends State<AboutScreen> {
       children: <Widget>[
         //Background Image
         Container(// Background Image
-          /*decoration: BoxDecoration(
+          decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('assets/Sandy_Background.png'),
+              image: AssetImage('assets/Untitled-centipede.png'),
               fit: BoxFit.cover,
               //height: double.infinity,
               //width: double.infinity,
             ),
-          ),*/
+          ),
         ),
         Scaffold(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.transparent,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -78,7 +78,7 @@ class _AboutScreenState extends State<AboutScreen> {
               height: 400,
               width: 350,
               decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(0.50),
                   borderRadius: BorderRadius.circular(10.0)
               ),
 
@@ -111,9 +111,9 @@ class _AboutScreenState extends State<AboutScreen> {
                               width: 300,
                               child:
                               Text(
-                                'Axel Maysonet\n'
-                                    'Ethan Thomas\n'
-                                    'Juan Torres Camacho\n'
+                                'Axel Maysonet - CpE\n'
+                                    'Ethan Thomas - CpE\n'
+                                    'Juan Torres Camacho - CpE\n'
                                     '\n'
                                     'Centiepede Remote Control',
                                 style: TextStyle(

@@ -5,6 +5,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+
 class BluetoothScreen extends StatefulWidget {
   @override
   _BluetoothScreenState createState() => _BluetoothScreenState();
@@ -44,15 +45,20 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
 
 
   Future<void> _requestLocationPermission() async {
+
     try{
-      await Permission.bluetooth.request();
-      await Permission.nearbyWifiDevices.request();
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.location,
+        Permission.bluetoothScan,
+        Permission.bluetoothAdvertise,
+        Permission.bluetoothConnect
+      ].request();
+
     }
     catch(e){
       print('Failed to ask for permissions: $e');
     }
 
-    await Permission.location.request();
   }
 
   Future<void> _fetchConnectedDevices() async {

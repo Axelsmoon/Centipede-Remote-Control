@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
-
+import '../screens/SettingsScreen.dart';
 
 
 
 class MainScreen extends StatefulWidget {
   @override
   _MainScreenState createState() => _MainScreenState();
+
 }
 
 class _MainScreenState extends State<MainScreen> {
@@ -20,11 +21,17 @@ class _MainScreenState extends State<MainScreen> {
   BluetoothCharacteristic? characteristic;
   String characteristicUuid = "0000ffe1-0000-1000-8000-00805f9b34fb"; // Replace with your characteristic UUID
 
+  String commandUP = SettingsScreen.newCommandUP;
+  String commandLEFT = SettingsScreen.newCommandLEFT;
+  String commandRIGHT = SettingsScreen.newCommandRIGHT;
+  String commandDOWN = SettingsScreen.newCommandDOWN;
+
 
   @override
   void initState() {
     super.initState();
     _fetchConnectedDevices();
+    print('commandUp= $commandUP');
   }
 
   // Function to initialize Bluetooth connection to already connected device
@@ -79,6 +86,16 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void updateCommands(String newCommandUP, String newCommandLEFT, String newCommandRIGHT, String newCommandDOWN) {
+    setState(() {
+      commandUP = newCommandUP;
+      commandLEFT = newCommandLEFT;
+      commandRIGHT = newCommandRIGHT;
+      commandDOWN = newCommandDOWN;
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +143,7 @@ class _MainScreenState extends State<MainScreen> {
                   icon: const Icon(Icons.menu, color: Color.fromRGBO(255, 255, 255, 0.70),),
                   onSelected: (value) {
                     Navigator.pushNamed(context, '/' "$value");
-
+                    //print('Selected: $value');
                   },
                   itemBuilder: (BuildContext context){
                     return[
@@ -141,6 +158,10 @@ class _MainScreenState extends State<MainScreen> {
                       const PopupMenuItem<String>(
                         value: 'data',
                         child: Text('Data'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'settings',
+                        child: Text('Settings'),
                       ),
                     ];
                   },
@@ -157,16 +178,21 @@ class _MainScreenState extends State<MainScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      DPad(sendCommand: sendCommand), // Pass the sendCommand method to DPad
-                      //SET (angle) command
+                      DPad(
+                        sendCommand: sendCommand,
+                        commandUP: commandUP, // Pass the command strings to DPad
+                        commandLEFT: commandLEFT,
+                        commandRIGHT: commandRIGHT,
+                        commandDOWN: commandDOWN,
+                      ),//SET (angle) command
                       SizedBox(width: 180),
                       Lever(sendCommand: sendCommand),
                       //WAVE (speed) command
                     ],
                   ),
 
-                  Expanded( // Wrap the ListView with Expanded
-                    child: ListView.builder(
+                  /*Expanded( // Wrap the ListView with Expanded
+                    child: ListView.builder( //bt devices list on controller screen
                       itemCount: devicesList.length,
                       itemBuilder: (context, index) {
                         return ListTile(
@@ -176,7 +202,7 @@ class _MainScreenState extends State<MainScreen> {
                         );
                       },
                     ),
-                  ),
+                  ),*/
                 ],
               ),
             ),
@@ -212,10 +238,16 @@ class _MainPageState extends State<MainPage> {
 class DPad extends StatelessWidget {
   final void Function(String) sendCommand;
 
+  String commandUP = SettingsScreen.newCommandUP;
+  String commandLEFT = SettingsScreen.newCommandLEFT;
+  String commandRIGHT = SettingsScreen.newCommandRIGHT;
+  String commandDOWN = SettingsScreen.newCommandDOWN;
+
   double setWidth= 108.33;
   double setHeight= 65;
 
-  DPad({required this.sendCommand});
+
+  DPad({required this.sendCommand, required commandUP, required commandLEFT, required commandRIGHT, required commandDOWN});
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +264,7 @@ class DPad extends StatelessWidget {
               rotationAngle: math.pi/2, // Rotate by 90 degrees
               onTap: () {
                 // Define the action for the bottom PentagonButton here
-                sendCommand('WAVE 15\r\n');
+                sendCommand(commandUP);
               },
             ),
 
@@ -245,7 +277,7 @@ class DPad extends StatelessWidget {
                   rotationAngle: 2*(math.pi), // Rotate by 360 degrees
                   onTap: () {
                     // Define the action for the bottom PentagonButton here
-                    sendCommand("WAVE 64 -30\r\n");
+                    sendCommand(commandLEFT);
                   },
                 ),
 
@@ -256,7 +288,7 @@ class DPad extends StatelessWidget {
                   rotationAngle: math.pi, // Rotate by 180 degrees
                   onTap: () {
                     // Define the action for the bottom PentagonButton here
-                    sendCommand("WAVE 64 30\r\n");
+                    sendCommand(commandRIGHT);
                     print("right");
                   },
                 ),
@@ -270,7 +302,7 @@ class DPad extends StatelessWidget {
               rotationAngle: 3*math.pi / 2, // Rotate by 270 degrees
               onTap: () {
                 // Define the action for the bottom PentagonButton here
-                sendCommand('WAVE 0\r\n');
+                sendCommand(commandDOWN);
               },
             ),
 
