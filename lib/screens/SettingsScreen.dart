@@ -4,10 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 class SettingsScreen extends StatefulWidget {
 
 
-  static String newCommandUP= 'WAVE 15\r\n';
-  static String newCommandLEFT= "WAVE 64 -30\r\n";
-  static String newCommandRIGHT= "WAVE 64 30\r\n";
-  static String newCommandDOWN= 'WAVE 0\r\n';
+  static int newCommandUP= 15;
+  static String newCommandLEFT= "64";
+  static String angleLeft= "-30";
+  static String newCommandRIGHT= "64";
+  static String angleRight= "30";
+  static int newCommandDOWN= 0;
+  static bool useInput=false;
+  static double leverSensitivity= 2.0;
 
 
 
@@ -18,8 +22,11 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   TextEditingController _commandControllerUP = TextEditingController();
   TextEditingController _commandControllerLEFT = TextEditingController();
+  TextEditingController _commandControllerLEFTAngle = TextEditingController();
   TextEditingController _commandControllerRIGHT = TextEditingController();
+  TextEditingController _commandControllerRIGHTAngle = TextEditingController();
   TextEditingController _commandControllerDOWN = TextEditingController();
+  TextEditingController _leverSensitive = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -88,67 +95,144 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+
                       Text(
-                        'Enter new TOP sendCommand string:',
+                        'Turn on to input custom Speed Values :',
                         style: TextStyle(fontSize: 18),
                       ),
-                      TextField(
-                        controller: _commandControllerUP,
-                        decoration: InputDecoration(
-                          hintText: 'e.g., WAVE 50\r\n',
-                        ),
+                      Switch(value: SettingsScreen.useInput,
+                          onChanged: (value){
+                            setState(() {
+                              SettingsScreen.useInput= value;
+                            });
+                          }
                       ),
+
+                      SizedBox(height: 20),
+
+                      if(SettingsScreen.useInput)
+                        Text(
+                          'Enter new Top Dpad value:',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      if(SettingsScreen.useInput)
+                        TextField(
+                          controller: _commandControllerUP,
+                          decoration: InputDecoration(
+                            hintText: 'Speed value between 0 & 127\r\n',
+                          ),
+                        ),
+                      if(SettingsScreen.useInput)
+                        SizedBox(height: 20),
+
+                      Text(
+                        'Enter new Left DPad value(s):',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Row(
+                        children: [
+                          if(SettingsScreen.useInput)
+                            Expanded(
+                              child: TextField(
+                                controller: _commandControllerLEFT,
+                                decoration: InputDecoration(
+                                  hintText: 'Speed between 0 & 127\r\n',
+                                ),
+                              ),
+                            ),
+                          if (SettingsScreen.useInput)
+                            SizedBox(width: 20), // Adjust as needed
+                          Expanded(
+                            child: TextField(
+                              controller: _commandControllerLEFTAngle,
+                              decoration: InputDecoration(
+                                hintText: 'Angle between -60 & 60\r\n',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
                       SizedBox(height: 20),
 
                       Text(
-                        'Enter new LEFT sendCommand string:',
+                        'Enter new Right DPad value(s):',
                         style: TextStyle(fontSize: 18),
                       ),
-                      TextField(
-                        controller: _commandControllerLEFT,
-                        decoration: InputDecoration(
-                          hintText: 'e.g., WAVE 50\r\n',
-                        ),
+                      Row(
+                        children: [
+                          if(SettingsScreen.useInput)
+                            Expanded(
+                              child: TextField(
+                                controller: _commandControllerRIGHT,
+                                decoration: InputDecoration(
+                                  hintText: 'Speed between 0 & 127\r\n',
+                                ),
+                              ),
+                            ),
+                          if (SettingsScreen.useInput)
+                            SizedBox(width: 20), // Adjust as needed
+                          Expanded(
+                            child: TextField(
+                              controller: _commandControllerRIGHTAngle,
+                              decoration: InputDecoration(
+                                hintText: 'Angle between -60 & 60\r\n',
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+
+                      if(SettingsScreen.useInput)
+                        Text(
+                          'Enter new Down DPad value:',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      if(SettingsScreen.useInput)
+                        TextField(
+                          controller: _commandControllerDOWN,
+                          decoration: InputDecoration(
+                            hintText: 'Speed value between 0 & 127\r\n',
+                          ),
+                        ),
+
                       SizedBox(height: 20),
 
                       Text(
-                        'Enter new RIGHT sendCommand string:',
+                        'Enter new Lever sensitivity:',
                         style: TextStyle(fontSize: 18),
                       ),
                       TextField(
-                        controller: _commandControllerRIGHT,
+                        controller: _leverSensitive,
                         decoration: InputDecoration(
-                          hintText: 'e.g., WAVE 50\r\n',
+                          hintText: 'Sensitivity value between 0.1 & 5.0 (Default= 2.0)\r\n',
                         ),
                       ),
-                      SizedBox(height: 20),
 
-                      Text(
-                        'Enter new DOWN sendCommand string:',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      TextField(
-                        controller: _commandControllerDOWN,
-                        decoration: InputDecoration(
-                          hintText: 'e.g., WAVE 50\r\n',
-                        ),
-                      ),
                       SizedBox(height: 20),
 
                       ElevatedButton(
                         onPressed: () {
                           if (_commandControllerUP.text.isNotEmpty) {
-                            SettingsScreen.newCommandUP = _commandControllerUP.text.trim() + '\r\n';
+                            SettingsScreen.newCommandUP = int.parse(_commandControllerUP.text.trim());
                           }
                           if (_commandControllerLEFT.text.isNotEmpty) {
-                            SettingsScreen.newCommandLEFT = _commandControllerLEFT.text.trim() + '\r\n';
+                            SettingsScreen.newCommandLEFT = _commandControllerLEFT.text.trim();
+                          }
+                          if (_commandControllerLEFTAngle.text.isNotEmpty) {
+                            SettingsScreen.angleLeft= _commandControllerLEFTAngle.text.trim();
                           }
                           if (_commandControllerRIGHT.text.isNotEmpty) {
-                            SettingsScreen.newCommandRIGHT = _commandControllerRIGHT.text.trim() + '\r\n';
+                            SettingsScreen.newCommandRIGHT = _commandControllerRIGHT.text.trim();
+                          }
+                          if (_commandControllerRIGHTAngle.text.isNotEmpty) {
+                            SettingsScreen.angleRight= _commandControllerRIGHTAngle.text.trim();
                           }
                           if (_commandControllerDOWN.text.isNotEmpty) {
-                            SettingsScreen.newCommandDOWN = _commandControllerDOWN.text.trim() + '\r\n';
+                            SettingsScreen.newCommandDOWN = int.parse(_commandControllerDOWN.text.trim());
+                          }
+                          if (_leverSensitive.text.isNotEmpty) {
+                            SettingsScreen.leverSensitivity = double.parse(_leverSensitive.text.trim());
                           }
 
                           Navigator.of(context).pop();

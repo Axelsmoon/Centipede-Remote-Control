@@ -21,10 +21,12 @@ class _MainScreenState extends State<MainScreen> {
   BluetoothCharacteristic? characteristic;
   String characteristicUuid = "0000ffe1-0000-1000-8000-00805f9b34fb"; // Replace with your characteristic UUID
 
-  String commandUP = SettingsScreen.newCommandUP;
+  int commandUP = SettingsScreen.newCommandUP;
   String commandLEFT = SettingsScreen.newCommandLEFT;
   String commandRIGHT = SettingsScreen.newCommandRIGHT;
-  String commandDOWN = SettingsScreen.newCommandDOWN;
+  int commandDOWN = SettingsScreen.newCommandDOWN;
+
+  double _leverPosition = 63.5; // Initial position corresponding to WAVE 64
 
 
   @override
@@ -32,6 +34,13 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _fetchConnectedDevices();
     print('commandUp= $commandUP');
+  }
+
+  // Function to handle lever position change
+  void _handleLeverPositionChanged(double newPosition) {
+    setState(() {
+      _leverPosition = newPosition;
+    });
   }
 
   // Function to initialize Bluetooth connection to already connected device
@@ -86,7 +95,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  void updateCommands(String newCommandUP, String newCommandLEFT, String newCommandRIGHT, String newCommandDOWN) {
+  void updateCommands(int newCommandUP, String newCommandLEFT, String newCommandRIGHT, int newCommandDOWN) {
     setState(() {
       commandUP = newCommandUP;
       commandLEFT = newCommandLEFT;
@@ -184,9 +193,14 @@ class _MainScreenState extends State<MainScreen> {
                         commandLEFT: commandLEFT,
                         commandRIGHT: commandRIGHT,
                         commandDOWN: commandDOWN,
+                        leverPosition: _leverPosition, // Pass lever position to DPad
                       ),//SET (angle) command
                       SizedBox(width: 180),
-                      Lever(sendCommand: sendCommand),
+                      Lever(
+                        sendCommand: sendCommand,
+                        onLeverPositionChanged: _handleLeverPositionChanged,
+                        leverPosition: _leverPosition, // Pass leverPosition to Lever widget
+                      ),
                       //WAVE (speed) command
                     ],
                   ),
@@ -238,16 +252,20 @@ class _MainPageState extends State<MainPage> {
 class DPad extends StatelessWidget {
   final void Function(String) sendCommand;
 
-  String commandUP = SettingsScreen.newCommandUP;
+  int commandUP = SettingsScreen.newCommandUP;
   String commandLEFT = SettingsScreen.newCommandLEFT;
   String commandRIGHT = SettingsScreen.newCommandRIGHT;
-  String commandDOWN = SettingsScreen.newCommandDOWN;
+  int commandDOWN = SettingsScreen.newCommandDOWN;
+  double leverPosition;
+  String commandAngleRight =SettingsScreen.angleRight;
+  String commandAngleLeft = SettingsScreen.angleLeft;
+  bool useInput = SettingsScreen.useInput;
 
   double setWidth= 108.33;
   double setHeight= 65;
 
 
-  DPad({required this.sendCommand, required commandUP, required commandLEFT, required commandRIGHT, required commandDOWN});
+  DPad({required this.sendCommand, required commandUP, required commandLEFT, required commandRIGHT, required commandDOWN, required this.leverPosition, });
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +282,16 @@ class DPad extends StatelessWidget {
               rotationAngle: math.pi/2, // Rotate by 90 degrees
               onTap: () {
                 // Define the action for the bottom PentagonButton here
-                sendCommand(commandUP);
+                if(useInput == false){
+                  sendCommand('WAVE ${leverPosition.round()}\r\n');
+                } else{
+                  /*commandUP+=10;  //for adding speed as you hold button
+                  if(commandUP> 127){
+                    commandUP= 127;
+                  }*/
+                  sendCommand('WAVE ${commandUP}\r\n');
+                }
+
               },
             ),
 
@@ -277,7 +304,13 @@ class DPad extends StatelessWidget {
                   rotationAngle: 2*(math.pi), // Rotate by 360 degrees
                   onTap: () {
                     // Define the action for the bottom PentagonButton here
-                    sendCommand(commandLEFT);
+                    if(useInput == false) {
+                      sendCommand('WAVE ${leverPosition
+                          .round()} ${commandAngleLeft}\r\n');
+                    } else {
+                      sendCommand('WAVE ${commandLEFT} ${commandAngleLeft}\r\n');
+                    }
+
                   },
                 ),
 
@@ -288,8 +321,12 @@ class DPad extends StatelessWidget {
                   rotationAngle: math.pi, // Rotate by 180 degrees
                   onTap: () {
                     // Define the action for the bottom PentagonButton here
-                    sendCommand(commandRIGHT);
-                    print("right");
+                    if(useInput == false) {
+                      sendCommand('WAVE ${leverPosition.round()} ${commandAngleRight}\r\n');
+                    }else {
+                      sendCommand('WAVE ${commandRIGHT} ${commandAngleRight}\r\n');
+                    }
+
                   },
                 ),
 
@@ -302,7 +339,14 @@ class DPad extends StatelessWidget {
               rotationAngle: 3*math.pi / 2, // Rotate by 270 degrees
               onTap: () {
                 // Define the action for the bottom PentagonButton here
-                sendCommand(commandDOWN);
+                /*if(useInput == false){
+                  commandDOWN= leverPosition.round();
+                  commandDOWN-=10;    //for slowing down as you hold dpad
+                  if(commandDOWN< 0){
+                    commandDOWN= 0;
+                  }
+                }*/
+                sendCommand('WAVE ${commandDOWN}\r\n');
               },
             ),
 
@@ -443,8 +487,9 @@ class PentagonPainter extends CustomPainter {
 class Lever extends StatefulWidget {
   BluetoothDevice? get connectedDevice => null;
   final void Function(String) sendCommand; // Define sendCommand with a String parameter
+  final void Function(double) onLeverPositionChanged; // Callback for lever position change
 
-  Lever({required this.sendCommand});
+  Lever({required this.sendCommand, required this.onLeverPositionChanged, required double leverPosition});
 
   @override
   _LeverState createState() => _LeverState();
@@ -453,7 +498,7 @@ class Lever extends StatefulWidget {
 class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _leverPosition = 63.5; // Initial position corresponding to WAVE 64
-  double sensitivity = 2.0; // Adjust the sensitivity value
+  double sensitivity = SettingsScreen.leverSensitivity; // Adjust the sensitivity value
 
   @override
   void initState() {
@@ -477,21 +522,28 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
         setState(() {
           // Adjust the sensitivity here
           _leverPosition -= details.delta.dy / sensitivity;
-          if (_leverPosition < 0.0) {
+
+          if (_leverPosition < 0.0) {//lower boundary
             _leverPosition = 0.0;
-          } else if (_leverPosition > 127.0) {
+          } else if (_leverPosition > 127.0) {//upper boundary
             _leverPosition = 127.0;
           }
+
+          _controller.animateTo(
+            _leverPosition / 127.0,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
           // Determine the command based on lever position and send it via Bluetooth
           widget.sendCommand('WAVE ${_leverPosition.round()}\r\n');
+
+          // Call the callback function to pass _leverPosition to the parent widget
+          widget.onLeverPositionChanged(_leverPosition);
+
         });
       },
       onVerticalDragEnd: (details) {
-        _controller.animateTo(
-          _leverPosition / 127.0,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+
       },
       child: Container(
         width: 50,
