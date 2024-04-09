@@ -26,14 +26,14 @@ class _MainScreenState extends State<MainScreen> {
   String commandRIGHT = SettingsScreen.newCommandRIGHT;
   int commandDOWN = SettingsScreen.newCommandDOWN;
 
-  double _leverPosition = 63.5; // Initial position corresponding to WAVE 64
+  double _leverPosition = 15; // Initial position corresponding to WAVE 64
 
 
   @override
   void initState() {
     super.initState();
     _fetchConnectedDevices();
-    print('commandUp= $commandUP');
+
   }
 
   // Function to handle lever position change
@@ -161,12 +161,16 @@ class _MainScreenState extends State<MainScreen> {
                         child: Text('Bluetooth'),
                       ),
                       const PopupMenuItem<String>(
-                        value: 'about',
-                        child: Text('About'),
-                      ),
-                      const PopupMenuItem<String>(
                         value: 'data',
                         child: Text('Data'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'monitor',
+                        child: Text('Terminal'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'about',
+                        child: Text('About'),
                       ),
                       const PopupMenuItem<String>(
                         value: 'settings',

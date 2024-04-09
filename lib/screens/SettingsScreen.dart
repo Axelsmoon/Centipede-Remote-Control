@@ -63,21 +63,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               itemBuilder: (BuildContext context){
                 return[
                   const PopupMenuItem<String>(
-                    value: 'bt',
-                    child: Text('Bluetooth'),
+                    value: 'main',
+                    child: Text('Controller'),
                   ),
                   const PopupMenuItem<String>(
-                    value: 'about',
-                    child: Text('About'),
+                    value: 'bt',
+                    child: Text('Bluetooth'),
                   ),
                   const PopupMenuItem<String>(
                     value: 'data',
                     child: Text('Data'),
                   ),
                   const PopupMenuItem<String>(
-                    value: 'main',
-                    child: Text('Controller'),
+                    value: 'monitor',
+                    child: Text('Terminal'),
                   ),
+                  const PopupMenuItem<String>(
+                    value: 'about',
+                    child: Text('About'),
+                  ),
+
                 ];
               },
             )

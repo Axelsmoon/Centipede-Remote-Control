@@ -66,6 +66,18 @@ class _AboutScreenState extends State<AboutScreen> {
                       value: 'bt',
                       child: Text('Bluetooth'),
                     ),
+                    const PopupMenuItem<String>(
+                      value: 'data',
+                      child: Text('Data'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'monitor',
+                      child: Text('Terminal'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'settings',
+                      child: Text('Settings'),
+                    ),
 
                   ];
                 },
@@ -97,7 +109,7 @@ class _AboutScreenState extends State<AboutScreen> {
                             "About Us",
                             style: TextStyle(
                               color: Colors.black,
-                              fontSize: 34.0,
+                              fontSize: 24.0,
                               fontWeight: FontWeight.normal,
                             ),
                           ),

@@ -200,13 +200,22 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                       child: Text('Controller'),
                     ),
                     const PopupMenuItem<String>(
+                      value: 'data',
+                      child: Text('Data'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'monitor',
+                      child: Text('Terminal'),
+                    ),
+                    const PopupMenuItem<String>(
                       value: 'about',
                       child: Text('About'),
                     ),
                     const PopupMenuItem<String>(
-                      value: 'data',
-                      child: Text('Data'),
+                      value: 'settings',
+                      child: Text('Settings'),
                     ),
+
                   ];
                 },
               )

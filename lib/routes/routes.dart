@@ -3,6 +3,7 @@ import 'package:centipede_control/screens/MainScreen.dart';
 import 'package:centipede_control/screens/BluetoothScreen.dart';
 import '../screens/AboutScreen.dart';
 import '../screens/DataScreen.dart';
+import '../screens/MonitorScreen.dart';
 import '../screens/SettingsScreen.dart';
 
 class Routes {
@@ -11,6 +12,7 @@ class Routes {
   static const String ABOUTSCREEN = '/about';
   static const String DATASCREEN = '/data';
   static const String SETTINGSSCREEN = '/settings';
+  static const String MONITORSCREEN = '/monitor';
 
   static Map<String, Widget Function(BuildContext)> get getroutes =>
       {
@@ -20,5 +22,6 @@ class Routes {
         ABOUTSCREEN: (context) => AboutScreen(),
         DATASCREEN: (context) => DataScreen(),
         SETTINGSSCREEN: (context) => SettingsScreen(),
+        MONITORSCREEN: (context) => MonitorScreen(),
       };
 }
