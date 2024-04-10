@@ -7,6 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 
 class BluetoothScreen extends StatefulWidget {
+
+  static BluetoothDevice deviceTapped= '' as BluetoothDevice;
   @override
   _BluetoothScreenState createState() => _BluetoothScreenState();
 }
@@ -97,6 +99,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
       await device.connect();
+      BluetoothScreen.deviceTapped= device;
 
       // You can add further actions after successful connection if needed
     } catch (e) {

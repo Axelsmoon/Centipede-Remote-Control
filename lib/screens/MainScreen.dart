@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:centipede_control/screens/BluetoothScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'dart:async';
@@ -49,7 +50,8 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       devicesList.addAll(connectedDevices);
       if (connectedDevices.isNotEmpty) {
-        connectedDevice = connectedDevices.first;
+        // connectedDevice = connectedDevices.first;
+        connectedDevice = BluetoothScreen.deviceTapped;
       }
     });
 
