@@ -12,6 +12,7 @@ class SettingsScreen extends StatefulWidget {
   static int newCommandDOWN= 0;
   static bool useInput=false;
   static double leverSensitivity= 2.0;
+  static int leverDelay= 50;
 
 
 
@@ -27,6 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   TextEditingController _commandControllerRIGHTAngle = TextEditingController();
   TextEditingController _commandControllerDOWN = TextEditingController();
   TextEditingController _leverSensitive = TextEditingController();
+  TextEditingController _leverDelay = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +218,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       SizedBox(height: 20),
 
+                      TextField(
+                        controller: _leverDelay,
+                        decoration: InputDecoration(
+                          hintText: 'Lever delay value in miliseconds (Default= 50)\r\n',
+                        ),
+                      ),
+
+                      SizedBox(height: 20),
+
                       ElevatedButton(
                         onPressed: () {
                           if (_commandControllerUP.text.isNotEmpty) {
@@ -238,6 +249,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                           if (_leverSensitive.text.isNotEmpty) {
                             SettingsScreen.leverSensitivity = double.parse(_leverSensitive.text.trim());
+                          }
+
+                          if (_leverDelay.text.isNotEmpty) {
+                            SettingsScreen.leverDelay = int.parse(_leverDelay.text.trim());
                           }
 
                           Navigator.of(context).pop();

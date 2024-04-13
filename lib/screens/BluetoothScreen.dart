@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 class BluetoothScreen extends StatefulWidget {
 
-  static BluetoothDevice deviceTapped= '' as BluetoothDevice;
+  static BluetoothDevice? deviceTapped= null;
   @override
   _BluetoothScreenState createState() => _BluetoothScreenState();
 }

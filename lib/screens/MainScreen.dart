@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:math';
 import 'package:centipede_control/screens/BluetoothScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:confetti/confetti.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../screens/SettingsScreen.dart';
+
 
 
 
@@ -28,14 +32,25 @@ class _MainScreenState extends State<MainScreen> {
   int commandDOWN = SettingsScreen.newCommandDOWN;
 
   double _leverPosition = 15; // Initial position corresponding to WAVE 64
+  int tapCounter = 0;
+  late ConfettiController _centerController;
+  final player = AudioPlayer();
 
 
   @override
   void initState() {
     super.initState();
     _fetchConnectedDevices();
+    _centerController = ConfettiController(duration: const Duration(seconds: 2));
 
   }
+
+  void dispose() {
+    // dispose the controller
+    _centerController.dispose();
+    super.dispose();
+  }
+
 
   // Function to handle lever position change
   void _handleLeverPositionChanged(double newPosition) {
@@ -52,6 +67,13 @@ class _MainScreenState extends State<MainScreen> {
       if (connectedDevices.isNotEmpty) {
         // connectedDevice = connectedDevices.first;
         connectedDevice = BluetoothScreen.deviceTapped;
+        connectedDevice = connectedDevices.firstWhere(
+                (device) => device.name == "Myriapod",
+        );
+        //connectedDevice = BluetoothScreen.deviceTapped;
+      }
+      else{
+        print("empty bro");
       }
     });
 
@@ -106,7 +128,15 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void playSound() async{
+    //await player.setSource(AssetSource('yippee-147032.mp3'));
+    //await player.resume();
+  }
 
+  void showConfetti() {
+    // invoking confettiController to come into play
+    _centerController.play();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +176,19 @@ class _MainScreenState extends State<MainScreen> {
               IconButton(
                 icon: Image.asset('assets/centipede.png'),
                 onPressed: (){
-                  Navigator.pushNamed(context, '/home');
+                  setState(() {
+                    // Increment the tap counter
+                    tapCounter++;
+
+                    // If tapCounter reaches 3, trigger the confetti animation
+                    if (tapCounter == 3) {
+                      // Call a function to trigger confetti animation
+                      showConfetti();
+                      player.play(AssetSource('yippee-147032.mp3'));
+                      // Reset the tapCounter for future taps
+                      tapCounter = 0;
+                    }
+                  });
                 },
               ),
               actions:[
@@ -183,10 +225,29 @@ class _MainScreenState extends State<MainScreen> {
                 )
               ]
           ),
-          body: Center(
-            child:
+          body: SafeArea(
+            child: Stack(
+              children: <Widget>[
+                // align the confetti on the screen
+                Align(
+                  alignment: Alignment.center,
+                  child: ConfettiWidget(
+                    confettiController: _centerController,
+                    blastDirection: pi / 2,
+                    maxBlastForce: 5,
+                    minBlastForce: 1,
+                    emissionFrequency: 0.03,
 
-            Align(
+                    // 10 particles will pop-up at a time
+                    numberOfParticles: 10,
+
+                    // particles will pop-up
+                    gravity: 0,
+                  ),
+                ),
+
+          Center(
+            child: Align(
               alignment: Alignment.topCenter,
               child: Column(
                 children: [
@@ -207,9 +268,54 @@ class _MainScreenState extends State<MainScreen> {
                         onLeverPositionChanged: _handleLeverPositionChanged,
                         leverPosition: _leverPosition, // Pass leverPosition to Lever widget
                       ),
+
+                        Column(
+                          children: [
+                            Container(
+                                child: Row(
+                                  children: [
+                                    if(connectedDevice != null)
+                                      Text(
+                                        "${connectedDevice?.name}",
+                                        style: GoogleFonts.getFont(
+                                          'Overlock',
+                                          fontSize: 10,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    if(connectedDevice != null)
+                                      Icon(Icons.circle, color: Colors.green, size: 10),
+                                  ],
+                                )
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.all(0), // Adjust padding to change size
+                              ),
+                                child: Text(
+                                  "Refresh",
+                                  style: GoogleFonts.getFont(
+                                    'Overlock',
+                                    fontSize: 10,
+
+                                  ),
+                                ),
+                              onPressed: (){
+                                Navigator.of(context).pop();
+                                Navigator.pushNamed(context, '/main');
+                              },
+
+                            ),
+                          ],
+                        ),
+
+
+
                       //WAVE (speed) command
                     ],
                   ),
+
+
 
                   /*Expanded( // Wrap the ListView with Expanded
                     child: ListView.builder( //bt devices list on controller screen
@@ -225,6 +331,10 @@ class _MainScreenState extends State<MainScreen> {
                   ),*/
                 ],
               ),
+            ),
+
+          ),
+              ],
             ),
           ),
         ),
@@ -505,6 +615,8 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _leverPosition = 63.5; // Initial position corresponding to WAVE 64
   double sensitivity = SettingsScreen.leverSensitivity; // Adjust the sensitivity value
+  int leverDelay= SettingsScreen.leverDelay;
+  Timer? _sendCommandTimer; // Timer to delay sending command
 
   @override
   void initState() {
@@ -518,6 +630,7 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     _controller.dispose();
+    _sendCommandTimer?.cancel(); // Cancel timer when disposing
     super.dispose();
   }
 
@@ -540,11 +653,17 @@ class _LeverState extends State<Lever> with SingleTickerProviderStateMixin {
             duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
-          // Determine the command based on lever position and send it via Bluetooth
-          widget.sendCommand('WAVE ${_leverPosition.round()}\r\n');
+          // Cancel previous timer if exists
+          _sendCommandTimer?.cancel();
 
-          // Call the callback function to pass _leverPosition to the parent widget
-          widget.onLeverPositionChanged(_leverPosition);
+          // Start new timer to delay sending command
+          _sendCommandTimer = Timer(Duration(milliseconds: leverDelay), () {
+            // Determine the command based on lever position and send it via Bluetooth
+            widget.sendCommand('WAVE ${_leverPosition.round()}\r\n');
+
+            // Call the callback function to pass _leverPosition to the parent widget
+            widget.onLeverPositionChanged(_leverPosition);
+          });
 
         });
       },
