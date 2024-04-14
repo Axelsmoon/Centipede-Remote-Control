@@ -288,23 +288,25 @@ class _MainScreenState extends State<MainScreen> {
                                   ],
                                 )
                             ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.all(0), // Adjust padding to change size
-                              ),
-                                child: Text(
-                                  "Refresh",
-                                  style: GoogleFonts.getFont(
-                                    'Overlock',
-                                    fontSize: 10,
 
-                                  ),
-                                ),
+                            SizedBox(height: 20),
+
+                            IconButton(
                               onPressed: (){
                                 Navigator.of(context).pop();
                                 Navigator.pushNamed(context, '/main');
                               },
+                              icon: Icon(Icons.refresh, color: Color.fromRGBO(106, 90, 205, 0.97), size: 25),
 
+                            ),
+
+                            SizedBox(height: 20),
+
+                            IconButton(
+                                onPressed:(){
+                                  sendCommand('HOME\r\n');
+                                },
+                                icon: Icon(Icons.home, color: Colors.white54, size: 20)
                             ),
                           ],
                         ),
