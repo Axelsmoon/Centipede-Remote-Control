@@ -31,14 +31,6 @@ class _MonitorScreenState extends State<MonitorScreen> {
     _fetchConnectedDevices();
   }
 
-  /*void _initBluetooth() async {
-    FlutterBlue flutterBlue = FlutterBlue.instance;
-    List<BluetoothDevice> devices = await flutterBlue.connectedDevices;
-    if (devices.isNotEmpty) {
-      device = devices.first;
-      _subscribeToCharacteristic();
-    }
-  }*/
   void sendCommand(String command) {
     if (characteristic != null && connectedDevice != null) {
       // Send command using the characteristic
@@ -57,6 +49,9 @@ class _MonitorScreenState extends State<MonitorScreen> {
       if (connectedDevices.isNotEmpty) {
         // connectedDevice = connectedDevices.first;
         connectedDevice = BluetoothScreen.deviceTapped;
+        connectedDevice = connectedDevices.firstWhere(
+              (device) => device.name == "Myriapod",
+        );
       }
     });
 
@@ -86,22 +81,6 @@ class _MonitorScreenState extends State<MonitorScreen> {
     });
   }
 
-  /*void _subscribeToCharacteristic() async {
-    List<BluetoothService> services = await device.discoverServices();
-    services.forEach((service) {
-      service.characteristics.forEach((char) {
-        if (char.properties.notify || char.properties.indicate) {
-          characteristic = char;
-          characteristic.setNotifyValue(true);
-          characteristic.value.listen(_handleData);
-          // Start data fetching
-          setState(() {
-            isFetchingData = true;
-          });
-        }
-      });
-    });
-  }*/
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
       await device.connect();

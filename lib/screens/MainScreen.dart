@@ -73,7 +73,7 @@ class _MainScreenState extends State<MainScreen> {
         //connectedDevice = BluetoothScreen.deviceTapped;
       }
       else{
-        print("empty bro");
+        //print("empty bro");
       }
     });
 
@@ -306,7 +306,16 @@ class _MainScreenState extends State<MainScreen> {
                                 onPressed:(){
                                   sendCommand('HOME\r\n');
                                 },
-                                icon: Icon(Icons.home, color: Colors.white54, size: 20)
+                                icon: Icon(Icons.flight_takeoff, color: Colors.white54, size: 20)
+                            ),
+
+                            SizedBox(height: 20),
+
+                            IconButton(
+                                onPressed:(){
+                                  sendCommand('SIT\r\n');
+                                },
+                                icon: Icon(Icons.flight_land, color: Colors.white54, size: 20)
                             ),
                           ],
                         ),

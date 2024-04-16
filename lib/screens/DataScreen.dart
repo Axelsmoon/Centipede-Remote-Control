@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'BluetoothScreen.dart';
 
 class DataScreen extends StatefulWidget {
   @override
@@ -9,28 +12,29 @@ class DataScreen extends StatefulWidget {
 }
 
 class _DataScreenState extends State<DataScreen> {
-  String statusCode1 = 'No Peripheral';
-  String sensorType1 = '';
-  String sensorData1 = '';
-
-  String statusCode2 = 'No Peripheral';
-  String sensorType2 = '';
-  String sensorData2 = '';
-
-  String statusCode3 = 'No Peripheral';
-  String sensorType3 = '';
-  String sensorData3 = '';
-
   Timer? timer;
   late BluetoothDevice device;
-  late BluetoothCharacteristic characteristic;
+  //late BluetoothCharacteristic characteristic;
+  FlutterBlue flutterBlue = FlutterBlue.instance;
+  List<BluetoothDevice> devicesList = [];
+  BluetoothDevice? connectedDevice;
+  BluetoothCharacteristic? characteristic;
+  String characteristicUuid = "0000ffe1-0000-1000-8000-00805f9b34fb"; // Replace with your characteristic UUID
+
+  String resultSeg= '';
+  String resultTemp= '';
+  String resultHumid= '';
+  List<String> dataList= [];
+  Map<String, String> segmentData = {};
 
   bool isFetchingData = false;
 
   @override
   void initState() {
     super.initState();
-    _initBluetooth();
+    _fetchConnectedDevices();
+
+    //_initBluetooth();
   }
 
   @override
@@ -40,89 +44,115 @@ class _DataScreenState extends State<DataScreen> {
   }
 
   void startDataFetch() {
-    timer = Timer.periodic(Duration(seconds: 10), (timer) {
-      fetchData();
+
+    timer = Timer.periodic(Duration(seconds: 5), (timer) async {
+      print("started fetch");
+      requestData("GET 10\r\n");
+      await Future.delayed(Duration(milliseconds: 650));
+      requestData("GET 20\r\n");
+      await Future.delayed(Duration(milliseconds: 650));
+      requestData("GET 30\r\n");
+      await Future.delayed(Duration(milliseconds: 650));
+      requestData("GET 40\r\n");
+      await Future.delayed(Duration(milliseconds: 650));
+      requestData("GET 50\r\n");
+      //fetchData();
     });
   }
 
-  void _initBluetooth() async {
-    FlutterBlue flutterBlue = FlutterBlue.instance;
-    List<BluetoothDevice> devices = await flutterBlue.connectedDevices;
-    if (devices.isNotEmpty) {
-      device = devices.first;
-      _subscribeToCharacteristic();
+  //GET 40
+  void requestData(String command) {
+    if (characteristic != null && connectedDevice != null) {
+      // Send command using the characteristic
+      characteristic!.write(utf8.encode(command));
+    } else {
+      //print("charactersitic= $characteristic");
+      //print("device= $connectedDevice");
+      print('Bluetooth not initialized or characteristic not found.');
     }
   }
 
-  void _subscribeToCharacteristic() async {
-    List<BluetoothService> services = await device.discoverServices();
+  Future<void> _fetchConnectedDevices() async {
+    List<BluetoothDevice> connectedDevices = await flutterBlue.connectedDevices;
+    setState(() {
+      devicesList.addAll(connectedDevices);
+      if (connectedDevices.isNotEmpty) {
+        // connectedDevice = connectedDevices.first;
+        connectedDevice = BluetoothScreen.deviceTapped;
+        connectedDevice = connectedDevices.firstWhere(
+              (device) => device.name == "Myriapod",
+        );
+        startDataFetch();
+      }
+    });
+
+    List<BluetoothService> services = await connectedDevice!.discoverServices();
+    List<String> uuids = [];
+    for (BluetoothService service in services) {
+      uuids.add(service.uuid.toString());
+    }
+
+    //print("uuids= $uuids");
+    // Find the desired characteristic
     services.forEach((service) {
-      service.characteristics.forEach((char) {
-        if (char.properties.notify || char.properties.indicate) {
+      service.characteristics.forEach((char) async {
+        if (char.uuid.toString() == characteristicUuid) {
           characteristic = char;
-          characteristic.setNotifyValue(true);
-          characteristic.value.listen(_handleData);
-          // Start data fetching
-          setState(() {
-            isFetchingData = true;
+          await characteristic?.setNotifyValue(true);
+
+          characteristic?.value.listen((value) {
+            // Handle received data
+            String receivedData = utf8.decode(value);
+            // Process received command/message
+            fetchData(receivedData);
           });
+          //print("charactersitic= $characteristic");
         }
       });
     });
   }
 
-  void _handleData(List<int>? value) {
-    if (value != null) {
-      // Parse the received value and update state accordingly
-      // This part depends on the format of data sent by the Bluetooth device
-      // For example, if the data format is [statusCode, sensorType, sensorData]
-      // you would parse it like this:
-      setState(() {
-        statusCode1 = 'OK';
-        sensorType1 = value[1].toString(); // Example: Sensor type is at index 1
-        sensorData1 = value[2].toString(); // Example: Sensor data is at index 2
-      });
-    }
-  }
+  void fetchData(String receivedData) {
+    //example received data: 12.3 degrees C 52.6% humidity
+    updateSegmentData(receivedData);
+    print('melon');
+    RegExp segRegex = RegExp(r'Segment\s(\d\d)');
+    Match? segMatch = segRegex.firstMatch(receivedData);
+    String segment = segMatch?.group(1) ?? '';
 
-  void fetchData() {
-    // Simulate receiving data from Bluetooth
-    // Replace this with your actual data retrieval logic
-    // For demonstration, I'm randomly updating data
+    // Extract temperature
+    RegExp tempRegex = RegExp(r'(\d+\.\d+)\sdegrees\sC'); // Matches temperature in Celsius
+    Match? tempMatch = tempRegex.firstMatch(receivedData);
+    String temperature = tempMatch?.group(1) ?? ''; // Extract the matched temperature value
+
+    // Extract humidity
+    RegExp humidityRegex = RegExp(r'(\d+\.\d+)%\shumidity'); // Matches humidity percentage
+    Match? humidityMatch = humidityRegex.firstMatch(receivedData);
+    String humidity = humidityMatch?.group(1) ?? ''; // Extract the matched humidity value
+
+
     setState(() {
-      updateData('Temperature', 'Sensor1', '25°C');
-      updateData('Light', 'Sensor2', '50 lux');
-      updateData('Temperature', 'Sensor3', '30°C');
+      dataList.add(receivedData); // Store received data
+      resultSeg = segment;
+      resultTemp = temperature;
+      resultHumid = humidity;
     });
   }
 
-  void updateData(String category, String type, String data) {
-    if (category == 'Temperature') {
-      setState(() {
-        statusCode1 = 'OK';
-        sensorType1 = type;
-        sensorData1 = data;
-      });
-    } else if (category == 'Light') {
-      setState(() {
-        statusCode2 = 'OK';
-        sensorType2 = type;
-        sensorData2 = data;
-      });
-    } else {
-      setState(() {
-        statusCode3 = 'OK';
-        sensorType3 = type;
-        sensorData3 = data;
-      });
-    }
+  void updateSegmentData(String receivedData) {
+    RegExp segRegex = RegExp(r'S(\d+)\s');
+    Match? segMatch = segRegex.firstMatch(receivedData);
+    String segment = segMatch?.group(1) ?? '';
+
+    // Update segment data
+    segmentData[segment] = receivedData;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(80, 50, 80, 0.57),
+        backgroundColor: Color.fromRGBO(32, 168, 82, 0.57),
         title: Text(
           'Data',
           style: GoogleFonts.getFont(
@@ -158,54 +188,85 @@ class _DataScreenState extends State<DataScreen> {
                   child: Text('Controller'),
                 ),
                 const PopupMenuItem<String>(
+                  value: 'bt',
+                  child: Text('Bluetooth'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'monitor',
+                  child: Text('Terminal'),
+                ),
+                const PopupMenuItem<String>(
                   value: 'about',
                   child: Text('About'),
                 ),
                 const PopupMenuItem<String>(
-                  value: 'bt',
-                  child: Text('Bluetooth'),
+                  value: 'settings',
+                  child: Text('Settings'),
                 ),
+
               ];
             },
           )
         ],
       ),
-      body: ListView(
-        children: [
-          ListTile(
-            title: Text('Category: Temperature'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Status Code: $statusCode1'),
-                Text('Sensor Type: $sensorType1'),
-                Text('Sensor Data: $sensorData1'),
-              ],
-            ),
-          ),
-          ListTile(
-            title: Text('Category: Light'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Status Code: $statusCode2'),
-                Text('Sensor Type: $sensorType2'),
-                Text('Sensor Data: $sensorData2'),
-              ],
-            ),
-          ),
-          ListTile(
-            title: Text('Category: No Peripheral'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Status Code: $statusCode3'),
+      body: ListView.builder(
+        itemCount: segmentData.length,
+        itemBuilder: (context, index) {
+          // Get segment number and data from the map
+          String segment = segmentData.keys.elementAt(index);
+          String data = segmentData[segment] ?? '';
 
-              ],
+          // Parse the data
+          RegExp segAndTypeRegex = RegExp(r'S(\d+)\s(\d)(?:\s(\d+\.\d+)\s(\d+\.\d+)|\s(\d+))?');
+          Match? segAndTypeMatch = segAndTypeRegex.firstMatch(data);
+          if (segAndTypeMatch != null) {
+            String type = segAndTypeMatch.group(2)!;
+
+            String status = '';
+            if (type == '0') {
+              status = 'No Peripheral';
+            } else if (type == '1') {
+              status = 'OK';
+            } else if (type == '2') {
+              status = 'OK'; // Assuming successful pressure reading
+            }
+
+            String? temperature = segAndTypeMatch.group(3);
+            String? humidity = segAndTypeMatch.group(4);
+            String? pressure = segAndTypeMatch.group(5);
+
+            return ListTile(
+              title: Text('Segment: $segment'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Status: $status'),
+                  if (type == '1' && temperature != null) Text('Temperature: $temperature°C'),
+                  if (type == '1' && humidity != null) Text('Humidity: $humidity%'),
+                  if (type == '2' && pressure != null) Text('Pressure: $pressure Pa'),
+                ],
+              ),
+            );
+          } else if(data.isNotEmpty){
+            // Handle invalid format
+            return ListTile(
+              title: Text('Invalid Format'),
+              subtitle: Text(data),
+            );
+          } else{
+            return Container(
+              height: 35,
+              child: ListTile(
+              title: Text(
+                  'Recieving Data:',
+              style: TextStyle(fontSize: 10),
+              ),
             ),
-          ),
-        ],
+            );
+          }
+        },
       ),
+
     );
   }
 }
